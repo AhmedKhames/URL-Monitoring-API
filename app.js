@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const authRoute = require('./routes/authRoute')
+const checkoute = require('./routes/checkRoute')
 
 require("dotenv").config();
 
@@ -15,7 +16,7 @@ app.use(bodyParser.json());
 app.use('/auth',authRoute)
 
 // check route 
-
+app.use('/check',checkoute)
 
 
 

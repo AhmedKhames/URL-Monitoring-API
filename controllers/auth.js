@@ -157,4 +157,3 @@ exports.confirmUser = async function (req, res, next) {
 
 };
 
-exports.logout = (req, res, next) => {};
