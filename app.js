@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const authRoute = require('./routes/authRoute')
 const checkoute = require('./routes/checkRoute')
+const monitoringRoute = require('./routes/monitoringRoute');
 
 require("dotenv").config();
 
@@ -12,12 +13,20 @@ const app = express();
 
 app.use(bodyParser.json());
 
+app.get('/',(req,res,next)=>{
+  res.status(200).json({
+    message : "server is up"
+  })
+})
+
 // authentication route
 app.use('/auth',authRoute)
 
 // check route 
 app.use('/check',checkoute)
 
+// start - stop monitoring 
+app.use('/monitoring',monitoringRoute)
 
 
 app.use((error, req, res, next) => {

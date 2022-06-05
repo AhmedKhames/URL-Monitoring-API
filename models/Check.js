@@ -21,11 +21,11 @@ const Check = new Schema(
     webhook: String,
     timeout: {
       type: Number,
-      default: 5,
+      default: 5, //second
     },
     interval: {
       type: Number,
-      default: 600,
+      default: 600, //second
     },
     threshold: {
       type: Number,

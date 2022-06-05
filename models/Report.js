@@ -8,7 +8,7 @@ const Report = new Schema(
       required: true,
       ref: "Check",
     },
-    status: {
+    status: { //code
       type: String,
       required: true,
     },
@@ -24,12 +24,16 @@ const Report = new Schema(
       type: Number,
       required: true,
     },
-    responseTime: {
+    responseTime: { // time between request and response
+      type: Number,
+      required: true,
+    },
+    outages:{
       type: Number,
       required: true,
     },
     history: {
-      type: [String],
+      type: [Object],
       required: true,
     },
   },
