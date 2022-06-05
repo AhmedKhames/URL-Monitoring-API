@@ -23,7 +23,7 @@ exports.startMonitor = async function (req, res, next) {
       //   message: `The report for check number ${check._id} is : `,
       //   Report: report,
       // });
-      console.log("runing .......");
+     console.log("runing .......");
     } catch (err) {
       monitor.stopCheck();
       if (!err.statusCode) {
@@ -64,7 +64,7 @@ exports.getAllReports = async function (req, res, next) {
 
 exports.stopMonitor = async function (req, res, next) {
   fetchingTimer = false;
-  console.log("stopped .......");
+ console.log("stopped .......");
   res.status(200).json({
     message: "Checking stopped",
   });

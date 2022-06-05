@@ -2,6 +2,18 @@ const Report = require("../models/Report");
 
 const axios = require("axios").default;
 
+const formData = require("form-data");
+const mailgun = require("mailgun.js");
+const User = require("../models/User");
+require("dotenv").config();
+
+const DOMAIN = process.env.MAILGUN_DOMAIN;
+const mg = new mailgun(formData);
+const client = mg.client({
+  username: "api",
+  key: process.env.MAILGUN_API_KEY,
+});
+
 class Monitor {
   #check;
   #isStarted;
@@ -84,59 +96,11 @@ class Monitor {
         );
       } catch (error) {
         updatedReport = await this.#updateReportDocumnet("404", 0, true);
-
-        // this.#updateStatus("404");
-        // this.#updateResponseTime(0);
-        // //downTime()
-        // this.#calcDownTime();
-        // this.#calcAvailability();
-        // this.#updateHistoryTime();
-        // // update outage()
-        // this.#outage();
+        this.#sendMail();
       }
+
       return updatedReport;
-      // axios
-      //   .get(this.#check.url, {
-      //     //   headers: this.#check.httpHeaders,
-      //     timeout: this.#check.timeout * 1000,
-      //   })
-      //   .then((res) => {
-      //     // if server is on up state
-      //     // update status in report updateStatus(res.metaData.status)
-      //     this.#updateReportDocumnet(
-      //       res.metaData.status,
-      //       res.responseTime
-      //     ).then((result) => {
-      //       this.#currentReoprt = result;
 
-      //       return result;
-      //     })
-      //     // this.#updateStatus(res.metaData.status);
-      //     // // update response time updateResponseTime(res.responseTime)
-      //     // this.#updateResponseTime(res.responseTime);
-      //     // // increament upTime ()
-      //     // this.#calcUpTime();
-
-      //     // this.#calcAvailability();
-      //     // this.#updateHistoryTime();
-      //   })
-      //   .catch((err) => {
-      //     // console.log(err);
-      //     // if server is on down state
-      //     this.#updateStatus("404");
-      //     this.#updateResponseTime(0);
-      //     //downTime()
-      //     this.#calcDownTime();
-      //     this.#calcAvailability();
-      //     this.#updateHistoryTime();
-      //     // update outage()
-      //     this.#outage();
-      //     //send mail
-      //   });
-
-      // if the response code >= 400 then the server is down else up
-      // if the response take time more than timeout then faild else success (duration = responeTime - requestTime)
-      // setInterval to make request to the server after check.interval time
       // ( The threshold of failed requests that will create an alert)
     }
     // console.log(this.#currentReoprt );
@@ -259,6 +223,21 @@ class Monitor {
         outages: numberOfDown,
       }
     );
+  }
+  async #sendMail() {
+    let reports = await this.#getOldReports();
+    let numberOfFaluirs = reports.length;
+    let user = await User.findById(this.#userId);
+
+    if (numberOfFaluirs >= this.#check.threshold) {
+      const verificationMessage = {
+        from: `test <ahmed@${DOMAIN}>`,
+        to: user.email,
+        subject: "The site is down",
+        html: `<a>The site ${this.#check.url} is down </a>`,
+      };
+      await client.messages.create(DOMAIN, verificationMessage);
+    }
   }
 
   async getCheckReoprt() {
