@@ -10,7 +10,9 @@ const router = express.Router();
 
 router.get("/start/:checkId", isAuth, monitoringController.startMonitor);
 
-router.get("/stop/:checkId", isAuth, monitoringController.stopMonitor);
+router.post("/stop", isAuth, monitoringController.stopMonitor);
+
+router.get('/report',isAuth,monitoringController.getAllReports)
 
 
 module.exports = router;

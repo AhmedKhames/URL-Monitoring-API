@@ -8,6 +8,11 @@ const Report = new Schema(
       required: true,
       ref: "Check",
     },
+    userId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
     status: { //code
       type: String,
       required: true,
@@ -19,6 +24,10 @@ const Report = new Schema(
     downTime: {
       type: Number,
       required: true,
+    },
+    isDown:{
+      type : Boolean,
+      default:false
     },
     upTime: {
       type: Number,

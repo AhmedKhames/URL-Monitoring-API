@@ -6,11 +6,12 @@ class Monitor {
   #check;
   #isStarted;
   #Report;
- 
-
-  constructor(check) {
+  #currentReoprt;
+  #userId;
+  constructor(check, userId) {
     this.#check = check;
     this.#isStarted = false;
+    this.#userId = userId;
   }
 
   async init() {
@@ -20,6 +21,7 @@ class Monitor {
     } else {
       this.#Report = await Report.create({
         checkId: this.#check._id,
+        userId: this.#userId,
         status: "0",
         availability: 0,
         downTime: 0,
@@ -40,6 +42,7 @@ class Monitor {
   }
 
   async monitoring() {
+    let updatedReport;
     if (this.#isStarted) {
       // start fetch the url on the check
 
@@ -70,46 +73,74 @@ class Monitor {
         }
       );
 
-      axios
-        .get(this.#check.url, {
+      try {
+        let res = await axios.get(this.#check.url, {
           //   headers: this.#check.httpHeaders,
           timeout: this.#check.timeout * 1000,
-        })
-        .then((res) => {
-          
-          // if server is on up state
-          // update status in report updateStatus(res.metaData.status)
+        });
+        updatedReport = await this.#updateReportDocumnet(
+          res.metaData.status,
+          res.responseTime
+        );
+      } catch (error) {
+        updatedReport = await this.#updateReportDocumnet("404", 0, true);
 
-          this.#updateStatus(res.metaData.status);
-          // update response time updateResponseTime(res.responseTime)
-          this.#updateResponseTime(res.responseTime);
-          // increament upTime ()
-          this.#calcUpTime();
+        // this.#updateStatus("404");
+        // this.#updateResponseTime(0);
+        // //downTime()
+        // this.#calcDownTime();
+        // this.#calcAvailability();
+        // this.#updateHistoryTime();
+        // // update outage()
+        // this.#outage();
+      }
+      return updatedReport;
+      // axios
+      //   .get(this.#check.url, {
+      //     //   headers: this.#check.httpHeaders,
+      //     timeout: this.#check.timeout * 1000,
+      //   })
+      //   .then((res) => {
+      //     // if server is on up state
+      //     // update status in report updateStatus(res.metaData.status)
+      //     this.#updateReportDocumnet(
+      //       res.metaData.status,
+      //       res.responseTime
+      //     ).then((result) => {
+      //       this.#currentReoprt = result;
 
-          this.#calcAvailability();
-          this.#updateHistoryTime();
-        })
-        .catch((err) => {
-         
-          // console.log(err);
-          // if server is on down state
-          this.#updateStatus("404");
-          this.#updateResponseTime(0);
-          //downTime()
-          this.#calcDownTime();
-          this.#calcAvailability();
-          this.#updateHistoryTime();
-          // update outage()
-          this.#outage();
-          //send mail
-        })
-        
+      //       return result;
+      //     })
+      //     // this.#updateStatus(res.metaData.status);
+      //     // // update response time updateResponseTime(res.responseTime)
+      //     // this.#updateResponseTime(res.responseTime);
+      //     // // increament upTime ()
+      //     // this.#calcUpTime();
+
+      //     // this.#calcAvailability();
+      //     // this.#updateHistoryTime();
+      //   })
+      //   .catch((err) => {
+      //     // console.log(err);
+      //     // if server is on down state
+      //     this.#updateStatus("404");
+      //     this.#updateResponseTime(0);
+      //     //downTime()
+      //     this.#calcDownTime();
+      //     this.#calcAvailability();
+      //     this.#updateHistoryTime();
+      //     // update outage()
+      //     this.#outage();
+      //     //send mail
+      //   });
 
       // if the response code >= 400 then the server is down else up
       // if the response take time more than timeout then faild else success (duration = responeTime - requestTime)
       // setInterval to make request to the server after check.interval time
       // ( The threshold of failed requests that will create an alert)
     }
+    // console.log(this.#currentReoprt );
+    // return this.#currentReoprt ;
   }
   async #updateStatus(status) {
     await Report.findOneAndUpdate(
@@ -144,6 +175,7 @@ class Monitor {
       responseTime: this.#Report.responseTime,
       createdAt: this.#Report.createdAt,
       updatedAt: this.#Report.updatedAt,
+      isDown: this.#Report.isDown,
     };
 
     await Report.findOneAndUpdate(
@@ -167,6 +199,7 @@ class Monitor {
         $inc: {
           upTime: 1,
         },
+        isDown: false,
       }
     );
   }
@@ -181,6 +214,7 @@ class Monitor {
         $inc: {
           downTime: 1,
         },
+        isDown: true,
       }
     );
   }
@@ -201,23 +235,21 @@ class Monitor {
     await currentReport.save();
   }
   async #getOldReports() {
-    const oldReport = await Report.findOne(
+    let oldReport = await Report.findOne(
       {
         checkId: this.#check._id,
         _id: this.#Report._id,
       },
-     'history'
+      "history"
     );
+
+    oldReport = oldReport["history"].filter((f) => f.isDown === true);
+
     return oldReport;
   }
   async #outage() {
     let oldReport = await this.#getOldReports();
-    let numberOfDown = 1;
-    for (const key of oldReport['history']) {
-      if (key.downTime > 0) {
-        numberOfDown++;
-      }
-    }
+    let numberOfDown = oldReport.length + 1;
     await Report.findOneAndUpdate(
       {
         checkId: this.#check._id,
@@ -230,7 +262,35 @@ class Monitor {
   }
 
   async getCheckReoprt() {
-    return this.#Report;
+    let report = await Report.find({
+      checkId: this.#check._id,
+      _id: this.#Report._id,
+    });
+    return report;
+  }
+
+  async #updateReportDocumnet(status, responseTime, isError = false) {
+    try {
+      // update status in report updateStatus(res.metaData.status)
+
+      await this.#updateStatus(status);
+      // update response time updateResponseTime(res.responseTime)
+      await this.#updateResponseTime(responseTime);
+      if (isError) {
+        await this.#calcDownTime();
+      } else {
+        await this.#calcUpTime();
+      }
+      await this.#calcAvailability();
+      await this.#updateHistoryTime();
+      if (isError) {
+        await this.#outage();
+      }
+      let result = await this.getCheckReoprt();
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
 
