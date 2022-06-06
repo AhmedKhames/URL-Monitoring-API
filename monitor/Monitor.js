@@ -100,9 +100,7 @@ class Monitor {
       }
 
       return updatedReport;
-
     }
-    
   }
   async #updateStatus(status) {
     await Report.findOneAndUpdate(
