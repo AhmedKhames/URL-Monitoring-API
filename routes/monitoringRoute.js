@@ -14,5 +14,7 @@ router.post("/stop", isAuth, monitoringController.stopMonitor);
 
 router.get('/report',isAuth,monitoringController.getAllReports)
 
+router.post('/start/:tag',isAuth,monitoringController.startMonitorByTag)
+
 
 module.exports = router;

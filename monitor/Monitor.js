@@ -101,10 +101,8 @@ class Monitor {
 
       return updatedReport;
 
-      // ( The threshold of failed requests that will create an alert)
     }
-    // console.log(this.#currentReoprt );
-    // return this.#currentReoprt ;
+    
   }
   async #updateStatus(status) {
     await Report.findOneAndUpdate(
@@ -251,7 +249,6 @@ class Monitor {
   async #updateReportDocumnet(status, responseTime, isError = false) {
     try {
       // update status in report updateStatus(res.metaData.status)
-
       await this.#updateStatus(status);
       // update response time updateResponseTime(res.responseTime)
       await this.#updateResponseTime(responseTime);

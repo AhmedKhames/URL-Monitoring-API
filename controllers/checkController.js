@@ -8,6 +8,7 @@ const { use } = require("../routes/authRoute");
 const formData = require("form-data");
 const mailgun = require("mailgun.js");
 const Check = require("../models/Check");
+const Report = require("../models/Report");
 
 require("dotenv").config();
 
@@ -48,7 +49,6 @@ exports.createCheck = async function (req, res, next) {
       ignoreSSL: ignoreSSL,
       userId: userId,
     });
-
     const createdCheck = await check.save();
     res.status(201).json({
       message: `Check for url : ${createdCheck.url} is created`,
@@ -120,6 +120,10 @@ exports.deleteCheck = async function (req, res, next) {
       _id: checkId,
       userId: req.userId,
     });
+    await Report.deleteMany({
+      checkId: checkId,
+      userId: req.userId,
+    })
     res.status(200).json({
       message: `Check ${checkId} is deleted`,
     });
