@@ -50,9 +50,6 @@ exports.startMonitorByTag = async function (req, res, next) {
   const tag = req.params.tag;
   const userId = req.userId;
   const getCheckByTag = await Check.find({ tags: tag, userId: userId });
-  // for (const chk of getCheckByTag) {
-  //   // setTimeout(fetchWorker, check.interval * 1000, chk, monitor);
-  // }
 
   res.status(200).json({
     message: "Checks by tags",
