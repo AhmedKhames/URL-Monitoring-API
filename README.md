@@ -12,6 +12,7 @@ The Database used is mongo DB with mongoose ODM
 1.	By npm install -> then npm start or,
 2.	By using docker -> docker-compose up command
 3.  you should add MAILGUN_API_KEY and MAILGUN_DOMAIN to .env
+
 # How it works
   1.	User head to sign up route and enter his name, email and password and confirmation sent to the user email
   2.	Then login using email and password and return JWT token which is used to authorize the user to Create, update and delete checks and get reports for these checks
